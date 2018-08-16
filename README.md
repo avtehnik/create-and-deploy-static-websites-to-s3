@@ -52,7 +52,7 @@ distconfig.json
       ],
       "Quantity": 1
     },
-    "DefaultRootObject": "/index.html",
+    "DefaultRootObject": "index.html",
     "PriceClass": "PriceClass_All",
     "Enabled": true,
     "DefaultCacheBehavior": {
