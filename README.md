@@ -4,7 +4,7 @@ Create bucket
 aws s3api create-bucket --region eu-central-1 --create-bucket-configuration LocationConstraint=eu-central-1  --profile  your-profile  --bucket your-bucket-name
 ```
 
-Enable staitc website hosting
+Enable static website hosting
 
 ```bash
 aws s3 website s3://your-bucket-name/ --index-document index.html   --profile  your-profile
