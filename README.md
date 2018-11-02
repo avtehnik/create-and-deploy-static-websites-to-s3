@@ -109,6 +109,12 @@ distconfig.json
 }
 ```
 
+```bash
+aws s3api put-bucket-policy --bucket your-bucket-name --policy file://policy.json
+```
+
+policy.json
+
 ```json
 {
     "Version": "2008-10-17",
