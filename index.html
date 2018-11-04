@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/2.5.17/vue.min.js"></script>
+</head>
+<body>
+<div id="app">
+<h2>Static website aws cli commants generator</h2>
+    <div>
+        Profile: <input v-model="profile" placeholder="profile">
+    </div>
+    <div>
+        Bucket: <input v-model="bucket" placeholder="bucket">
+    </div>
+    <div>
+        Domains: <textarea v-model="domains" placeholder="domains"></textarea>
+    </div>
+    <div>
+        region: <select v-model="region">
+        <option value="us-east-1">us-east-1 US East (N. Virginia)</option>
+        <option value="us-east-2">us-east-2 US East (Ohio)</option>
+        <option value="us-west-1">us-west-1 US West (N. California)</option>
+        <option value="us-west-2">us-west-2 US West (Oregon)</option>
+        <option value="ca-central-1">ca-central-1 Canada (Central)</option>
+        <option value="eu-central-1">eu-central-1 EU (Frankfurt)</option>
+        <option value="eu-west-1">eu-west-1 EU (Ireland)</option>
+        <option value="eu-west-2">eu-west-2 EU (London)</option>
+        <option value="eu-west-3">eu-west-3 EU (Paris)</option>
+        <option value="ap-northeast-1">ap-northeast-1 Asia Pacific (Tokyo)</option>
+        <option value="ap-northeast-2">ap-northeast-2 Asia Pacific (Seoul)</option>
+        <option value="ap-northeast-3">ap-northeast-3 Asia Pacific (Osaka-Local)</option>
+        <option value="ap-southeast-1">ap-southeast-1 Asia Pacific (Singapore)</option>
+        <option value="ap-southeast-2">ap-southeast-2 Asia Pacific (Sydney)</option>
+        <option value="ap-south-1">ap-south-1 Asia Pacific (Mumbai)</option>
+        <option value="sa-east-1">sa-east-1 South America (São Paulo)</option>
+    </select>
+    </div>
+    <br>
+
+
+    Create bucket
+    <pre>
+    aws s3api create-bucket --region {{region}} --create-bucket-configuration LocationConstraint=eu-central-1  --profile  {{profile}}  --bucket {{bucket}}
+    </pre>
+
+    Enable static website hosting
+
+    <pre>
+    aws s3 website s3://{{bucket}}/ --index-document index.html   --profile  {{profile}}
+    </pre>
+
+    Upload files to s3
+
+    <pre>
+    aws s3 sync src-folder s3://{{bucket}} --acl public-read  --profile  {{profile}}
+    </pre>
+
+    Create cloudfront distribution
+
+    <pre>
+    aws cloudfront create-distribution --distribution-config file://distconfig.json --profile  {{profile}}
+    </pre>
+
+
+    nano distconfig.json
+
+    <pre>
+    {
+    "Comment": "",
+    "CacheBehaviors": {
+    "Quantity": 0
+    },
+    "Logging": {
+    "Bucket": "",
+    "Prefix": "",
+    "Enabled": false,
+    "IncludeCookies": false
+    },
+    "Origins": {
+    "Items": [
+    {
+    "OriginPath": "",
+    "CustomOriginConfig": {
+    "OriginProtocolPolicy": "http-only",
+    "HTTPPort": 80,
+    "HTTPSPort": 443
+    },
+    "Id": "s3-{{bucket}}.s3-website.eu-central-1.amazonaws.com",
+    "DomainName": "{{bucket}}.s3-website.eu-central-1.amazonaws.com"
+    }
+    ],
+    "Quantity": 1
+    },
+    "DefaultRootObject": "index.html",
+    "PriceClass": "PriceClass_All",
+    "Enabled": true,
+    "DefaultCacheBehavior": {
+    "TrustedSigners": {
+    "Enabled": false,
+    "Quantity": 0
+    },
+    "TargetOriginId": "s3-{{bucket}}.s3-website.eu-central-1.amazonaws.com",
+    "ViewerProtocolPolicy": "allow-all",
+    "ForwardedValues": {
+    "Headers": {
+    "Quantity": 0
+    },
+    "Cookies": {
+    "Forward": "none"
+    },
+    "QueryString": false
+    },
+    "MaxTTL": 2629746,
+    "SmoothStreaming": false,
+    "DefaultTTL": 2629746,
+    "MinTTL": 2629746,
+    "AllowedMethods": {
+    "Items": [
+    "GET",
+    "HEAD"
+    ],
+    "CachedMethods": {
+    "Items": [
+    "GET",
+    "HEAD"
+    ],
+    "Quantity": 2
+    },
+    "Quantity": 2
+    }
+    },
+    "CallerReference": "Mon May 22 21:39:53 CEST 2018",
+    "CustomErrorResponses": {
+    "Quantity": 0
+    },
+    "Restrictions": {
+    "GeoRestriction": {
+    "RestrictionType": "none",
+    "Quantity": 0
+    }
+    },
+    "Aliases": {
+    "Items": [
+        {{domainsList}}
+    ],
+    "Quantity": 1
+    }
+    }
+    </pre>
+
+    <pre>
+    aws s3api put-bucket-policy --bucket {{bucket}} --policy file://policy.json
+    </pre>
+
+    nano policy.json
+
+    <pre>
+    {
+    "Version": "2008-10-17",
+    "Statement": [
+    {
+    "Sid": "AllowPublicRead",
+    "Effect": "Allow",
+    "Principal": {
+    "AWS": "*"
+    },
+    "Action": "s3:GetObject",
+    "Resource": "arn:aws:s3:::{{bucket}}/*"
+    }
+    ]
+    }
+    </pre>
+
+</div>
+<script>
+
+    new Vue({
+        el: '#app',
+        mounted: function () {
+            if (localStorage.bucket) {
+                this.bucket = localStorage.bucket;
+            }
+            if (localStorage.region) {
+                this.region = localStorage.region;
+            }
+            if (localStorage.profile) {
+                this.profile = localStorage.profile;
+            }
+            if (localStorage.domains) {
+                this.domains = localStorage.domains;
+            }
+        },
+        watch: {
+            bucket: function (bucket) {
+                localStorage.bucket = bucket;
+            },
+            region: function (region) {
+                localStorage.region = region;
+            },
+            profile: function (profile) {
+                localStorage.profile = profile;
+            },
+            domains: function (domains) {
+                var domainsList = domains.split("\n");
+                localStorage.domains = domains;
+
+                if(domainsList.length){
+                    this.domainsList = '"' + domains.split("\n").join('","') + '"';
+                }else {
+                    this.domainsList = '';
+                }
+
+
+            }
+        },
+        data: {
+            bucket: 'bucket',
+            region: 'region',
+            profile: 'profile',
+            callerReference: null,
+            domains: null,
+            domainsList: ""
+        }
+    });
+
+</script>
+</body>
+</html>
